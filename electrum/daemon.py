@@ -190,6 +190,7 @@ class AuthenticatedServer(Logger):
         try:
             request = await request.text()
             request = json.loads(request)
+            self.logger.info(f"recv: {request}")
             method = request['method']
             _id = request['id']
             params = request.get('params', [])  # type: Union[Sequence, Mapping]
@@ -214,6 +215,7 @@ class AuthenticatedServer(Logger):
                 'code': 1,
                 'message': str(e),
             }
+        self.logger.info(f"send: {response}")
         return web.json_response(response)
 
 

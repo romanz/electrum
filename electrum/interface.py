@@ -165,7 +165,7 @@ class NotificationSession(RPCSession):
         # note: semaphores/timeouts/backpressure etc are handled by
         # aiorpcx. the timeout arg here in most cases should not be set
         msg_id = next(self._msg_counter)
-        self.maybe_log(f"<-- {args} {kwargs} (id: {msg_id})")
+        self.interface.logger.info(f"<-- {args} {kwargs} (id: {msg_id})")
         try:
             # note: RPCSession.send_request raises TaskTimeout in case of a timeout.
             # TaskTimeout is a subclass of CancelledError, which is *suppressed* in TaskGroups
@@ -173,12 +173,14 @@ class NotificationSession(RPCSession):
                 super().send_request(*args, **kwargs),
                 timeout)
         except (TaskTimeout, asyncio.TimeoutError) as e:
-            raise RequestTimedOut(f'request timed out: {args} (id: {msg_id})') from e
+            msg = f'request timed out: {args} (id: {msg_id})'
+            self.interface.logger.warn(msg)
+            raise RequestTimedOut(msg) from e
         except CodeMessageError as e:
-            self.maybe_log(f"--> {repr(e)} (id: {msg_id})")
+            self.interface.logger.warn(f"--> {repr(e)} (id: {msg_id})")
             raise
         else:
-            self.maybe_log(f"--> {response} (id: {msg_id})")
+            self.interface.logger.info(f"--> {response} (id: {msg_id})")
             return response
 
     def set_default_timeout(self, timeout):
