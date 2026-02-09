@@ -329,6 +329,9 @@ class TrezorClientBase(HardwareClientBase, Logger):
     # ========= UI methods ==========
 
     def button_request(self, br):
+        if self.handler is None:
+            # ButtonRequest may be received before UI is available (during initial THP pairing).
+            return
         message = self.msg or MESSAGES.get(br.code) or MESSAGES['default']
         self.handler.show_message(message.format(self.device), self.client.cancel)
 
